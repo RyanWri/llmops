@@ -19,8 +19,5 @@ jobs:
           environment-file: environment.yml
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: conda env update --file environment.yml
-
       - name: Run main file
         run: python src/main.py

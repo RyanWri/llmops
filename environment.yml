@@ -8,4 +8,8 @@ dependencies:
   - matplotlib
   - seaborn
   - scikit-learn
-  - mlflow
+  - pip
+  - pip:
+      - mlflow
+      - torch
+      - transformers
