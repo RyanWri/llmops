@@ -1,0 +1,11 @@
+name: udemy_llmops
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - mlflow
