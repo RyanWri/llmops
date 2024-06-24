@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: udemy_llmops
+          environment-file: environment.yml
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: conda env update --file environment.yml
+
+      - name: Run main file
+        run: python src/main.py
