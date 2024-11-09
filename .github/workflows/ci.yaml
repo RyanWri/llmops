@@ -25,6 +25,10 @@ jobs:
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: 'latest'
+      
+      # Install dependencies in the virtual environment
+      - name: Install project dependencies
+        run: poetry install
 
       # Run Ruff for code formatting and linting
       - name: Run Ruff format check
