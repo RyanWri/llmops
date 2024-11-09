@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "gpu-mem-genius"
+version = "0.1.0"
+description = "gpu memory through reinforcment learning"
+authors = ["RyanWri <ranman37@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+ruff = "^0.7.3"
+pre-commit = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
