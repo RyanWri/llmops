@@ -1,4 +1,15 @@
 import subprocess
+import tensorflow as tf
+
+
+def get_device():
+    gpus = tf.config.list_physical_devices("GPU")
+    if not gpus:
+        print("No GPUs detected")
+    else:
+        print("GPUs detected:")
+        for gpu in gpus:
+            print(gpu)
 
 
 def get_gpu_stats():
@@ -50,4 +61,4 @@ def get_gpu_stats():
 
 
 if __name__ == "__main__":
-    get_gpu_stats()
+    print(tf.test.is_built_with_cuda())

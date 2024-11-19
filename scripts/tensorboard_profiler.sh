@@ -1,1 +1,0 @@
-poetry run tensorboard --logdir logs/fit
