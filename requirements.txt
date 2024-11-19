@@ -1,2 +1,4 @@
 torch<=1.12
 ruff<=0.5.3
+torchvision<=0.13.0
+numpy<=1.21.6
