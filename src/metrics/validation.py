@@ -9,8 +9,3 @@ def check_torch_gpu():
         print(f"  PyTorch is using GPU: {torch.cuda.is_initialized()}")
     else:
         print("  No GPU found for PyTorch.")
-
-
-if __name__ == "__main__":
-    print("-" * 30)
-    check_torch_gpu()
