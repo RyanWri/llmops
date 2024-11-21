@@ -2,3 +2,10 @@ torch<=1.12
 ruff<=0.5.3
 torchvision<=0.13.0
 numpy<=1.21.6
+protobuf<=3.20
+pynvml<=11.5.0
+pyclean<=2.7.2
+# tensorboard<=2.9.0
+# tensorboard-plugin-profile<=2.9.0
+# tensorflow<=2.9.0
+
