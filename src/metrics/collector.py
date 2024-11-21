@@ -11,6 +11,8 @@ from pynvml import (
 )
 import json
 
+from src.utils import create_run_directory, generate_run_id
+
 # Initialize NVML
 nvmlInit()
 gpu_handle = nvmlDeviceGetHandleByIndex(0)  # Assuming single GPU
@@ -48,19 +50,19 @@ class SimpleModel(nn.Module):
 
 
 # Collect GPU memory metrics
-def collect_gpu_memory_metrics(epoch):
+def collect_gpu_memory_metrics(epoch, batch):
     mem_info = nvmlDeviceGetMemoryInfo(gpu_handle)
     metrics = {
         "epoch": epoch,
+        "batch": batch,
         "memory_total_MB": mem_info.total // 1024**2,  # Convert bytes to MB
         "memory_used_MB": mem_info.used // 1024**2,  # Convert bytes to MB
     }
-    print(f"Epoch {epoch} GPU Memory Metrics: {metrics}")
     return metrics
 
 
 # Train the model and log GPU memory usage
-def train_and_log_memory():
+def train_and_log_memory(run_id: str):
     train_loader = load_data()
     model = SimpleModel().to(device)
     criterion = nn.CrossEntropyLoss()
@@ -80,24 +82,27 @@ def train_and_log_memory():
             optimizer.step()
 
             running_loss += loss.item()
-            if batch_idx % 100 == 0:
-                print(f"Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item()}")
+            if batch_idx % 50 == 0:
+                memory_metrics = collect_gpu_memory_metrics(epoch, batch_idx)
+                gpu_metrics.append(memory_metrics)
 
         print(f"Epoch {epoch} Training Loss: {running_loss / len(train_loader)}")
 
-        # Collect GPU memory metrics after each epoch
-        gpu_metrics.append(collect_gpu_memory_metrics(epoch))
-
     # Save GPU memory metrics to a JSON file
-    logs_filename = "/home/linuxu/models-logs/mnist/nvml-logs/batch64_epochs3.json"
+    logs_dir = "/home/linuxu/models-logs/mnist/nvml-logs/"
+    create_run_directory(logs_dir, run_id)
+    logs_filename = f"{logs_dir}/{run_id}/metrics.json"
     with open(logs_filename, "w") as f:
         json.dump(gpu_metrics, f, indent=4)
 
-    print("Training complete. GPU memory metrics saved to gpu_memory_metrics.json")
+    print(
+        "Training complete. GPU memory metrics saved, please check metrics.json in your run id foler"
+    )
 
 
 if __name__ == "__main__":
     try:
-        train_and_log_memory()
+        run_id = generate_run_id()
+        train_and_log_memory(run_id)
     finally:
         nvmlShutdown()
