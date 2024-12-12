@@ -5,7 +5,6 @@ numpy<=1.21.6
 protobuf<=3.20
 pynvml<=11.5.0
 pyclean<=2.7.2
-# tensorboard<=2.9.0
-# tensorboard-plugin-profile<=2.9.0
-# tensorflow<=2.9.0
-
+gymnasium
+gymnasium[classic-control]
+matplotlib
