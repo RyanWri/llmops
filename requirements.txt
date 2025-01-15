@@ -8,4 +8,5 @@ pyclean<=2.7.2
 gymnasium
 gymnasium[classic-control]
 matplotlib
-diagrams 
+diagrams
+ipython

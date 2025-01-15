@@ -81,6 +81,9 @@ The sample size (\(B\)) directly affects the input size to the neural network:
 2. **Static Network**: The architecture remains fixed during training.
 3. **Batch Size**: Fixed across training iterations unless explicitly changed.
 
+
+### Links
+1. [torch DQN](https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html)
 ---
 
 
