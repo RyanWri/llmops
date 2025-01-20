@@ -10,3 +10,4 @@ gymnasium[classic-control]
 matplotlib
 diagrams
 ipython
+ale-py
