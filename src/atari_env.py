@@ -3,37 +3,31 @@ import ale_py
 
 
 class AtariEnv:
-    def __init__(self, game_name, render_mode="human"):
-        """
-        Initialize the Atari environment.
-        Args:
-            game_name (str): Name of the Atari game (e.g., "ALE/Pong-v5").
-            render_mode (str): Mode to render the environment ("human", "rgb_array").
-        """
+    def __init__(self, game_name, render_mode=None, action_selector=None):
         gym.register_envs(ale_py)
         self.env = gym.make(game_name, render_mode=render_mode)
+        self.action_selector = action_selector or self._random_action
+
+    def _random_action(self, obs):
+        return self.env.action_space.sample()
+
+    def set_action_selector(self, action_selector):
+        self.action_selector = action_selector
 
     def reset(self):
-        """Reset the environment."""
         return self.env.reset()
 
-    def step(self, action):
-        """
-        Perform an action in the environment.
-        Args:
-            action (int): Action to take.
-        Returns:
-            obs: The next state.
-            reward: Reward received.
-            done: Whether the episode is finished.
-            info: Additional info from the environment.
-        """
-        return self.env.step(action)
+    def step(self):
+        action = self.action_selector(None)
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        done = terminated or truncated
+        return obs, reward, done, info
 
-    def render(self):
-        """Render the current state of the environment."""
-        self.env.render()
+    def get_dimensions(self):
+        return {
+            "state_dim": self.env.observation_space.shape,
+            "action_dim": self.env.action_space.n,
+        }
 
     def close(self):
-        """Close the environment."""
         self.env.close()
