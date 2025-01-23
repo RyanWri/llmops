@@ -11,13 +11,13 @@ from src.features.game_complexity import calculate_complexity_scores
 
 def get_network_architecture(dqn_agent):
     # need to use dnnmem to calculate layers and weights
-    return 1
+    return None
 
 
 def collect_static_features(
     env: AtariEnv, network_architecture, replay_buffer: ReplayBuffer
 ):
-    state_dim, action_dim = env.get_dimensions()
+    state_dim, action_dim = env.get_dimensions().values()
     dqn_agent_mem = get_network_architecture(network_architecture)
     return {
         "agent_memory": dqn_agent_mem,

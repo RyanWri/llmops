@@ -42,11 +42,14 @@ if __name__ == "__main__":
 
     # collect dynamic features
     total_features = []
-    num_of_episodes = 2
+    num_of_episodes = 100
     for episode_number in range(num_of_episodes):
         # make sure env is reseted before running an episode
         env.reset()
-        episode_features = run_episode(env, episode_number)
+        episode_features = static_features
+        dynamic_features = run_episode(env, episode_number)
+        # Merge static and dynamic features
+        episode_features.update(dynamic_features)
         total_features.append(episode_features)
 
     df = pd.DataFrame(total_features)
