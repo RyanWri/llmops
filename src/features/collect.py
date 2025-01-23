@@ -1,8 +1,10 @@
+import psutil
+import torch
 from collections import Counter
 import math
 import time
-import gymnasium as gym
 from scipy.stats import entropy
+from src.atari_env import AtariEnv
 from src.replay_buffer import ReplayBuffer
 from src.features.game_complexity import calculate_complexity_scores
 
@@ -12,30 +14,36 @@ def get_network_architecture(dqn_agent):
     return 1
 
 
-def collect_static_features(game_id, network_architecture, buffer_size):
-    dimensions = get_input_dimensions(game_id)
+def collect_static_features(
+    env: AtariEnv, network_architecture, replay_buffer: ReplayBuffer
+):
+    state_dim, action_dim = env.get_dimensions()
     dqn_agent_mem = get_network_architecture(network_architecture)
     return {
-        "game_id": game_id,
         "agent_memory": dqn_agent_mem,
-        "replay_buffer_size": buffer_size,
-        "state_dimension": dimensions["state_dimensions"],
-        "action_dimension": dimensions["action_space"],
+        "replay_buffer_size": replay_buffer.get_buffer_size(),
+        "state_dimension": state_dim,
+        "action_dimension": action_dim,
     }
 
 
-def collect_dynamic_features(reward, steps, states, episode_duration, episode_number):
-    num_steps = len(steps)
-    states_entropy = get_state_entropy(states)
+def collect_dynamic_features(
+    reward, num_steps, states, episode_duration, episode_number
+):
+    # needs to add states_entropy = get_state_entropy(states)
     epsilon_config = (0.1, 0.01, 0.0001)
     exploration_rate = get_exploration_rate(episode_number, epsilon_config)
+    cpu_memory = get_cpu_memory()
+    gpu_memory = get_gpu_memory()
 
     return {
         "episode_reward": reward,
         "episode_steps": num_steps,
         "episode_duration": episode_duration,
-        "episode_exploration_rate": 0,
-        "episode_states_entropy": states_entropy,
+        "episode_exploration_rate": exploration_rate,
+        "episode_states_entropy": 0,
+        "cpu_memory": cpu_memory,
+        "gpu_memory": gpu_memory,
     }
 
 
@@ -45,14 +53,6 @@ def get_timestamp():
 
 def get_game_complexity(game_id):
     return calculate_complexity_scores(game_id)
-
-
-def get_input_dimensions(game_id):
-    env = gym.make(game_id)
-    state_dimensions = env.observation_space.shape
-    action_space = env.action_space.n
-    env.close()
-    return {"state_dimensions": state_dimensions, "action_space": action_space}
 
 
 def get_replay_buffer_size(replay_buffer: ReplayBuffer):
@@ -70,3 +70,13 @@ def get_exploration_rate(episode_number, epsilon_config):
     return epsilon_min + (epsilon_max - epsilon_min) * math.exp(
         -decay_rate * episode_number
     )
+
+
+def get_cpu_memory():
+    return psutil.Process().memory_info().rss  # Memory usage in bytes
+
+
+def get_gpu_memory():
+    if torch.cuda.is_available():
+        return torch.cuda.memory_allocated()
+    return 0

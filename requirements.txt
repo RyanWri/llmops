@@ -12,3 +12,5 @@ diagrams
 ipython
 ale-py
 scipy
+psutil
+pandas

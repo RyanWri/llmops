@@ -29,3 +29,6 @@ class ReplayBuffer:
 
     def usage_percent(self):
         return len(self.buffer) / self.buffer_size * 100
+
+    def get_buffer_size(self):
+        return self.buffer_size
