@@ -1,66 +1,75 @@
-import gymnasium as gym
 import torch
-from agent import DQLAgent
-from replay_buffer import ReplayBuffer
-from metrics_exporter import MetricsExporter
+import time
+import gymnasium as gym
+import ale_py
+import numpy as np
+from src.dqn_agent import DQNAgent
+from src.replay_buffer import ReplayBuffer
+import yaml
 
-# Initialize components
-env = gym.make("CartPole-v1")
-state_dim = env.observation_space.shape[0]
-action_dim = env.action_space.n
 
-agent = DQLAgent(state_dim, action_dim)
-replay_buffer = ReplayBuffer(buffer_size=10000)
-metrics_exporter = MetricsExporter()
+def load_config(config_path="config.yaml"):
+    """
+    Load the configuration from a YAML file.
+    Args:
+        config_path (str): Path to the configuration file.
+    Returns:
+        dict: Parsed configuration dictionary.
+    """
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+    return config
 
-# Training loop
-episodes = 500
-batch_size = 64
+
+config = load_config("src/configurations/experiment_poc.yaml")
+episodes = config["environment"]["episodes"]
+gym.register_envs(ale_py)
+env = gym.make(
+    id=config["environment"]["game_name"],
+    render_mode=config["environment"]["render_mode"],
+)
+agent = DQNAgent(
+    state_dim=env.observation_space.shape,
+    action_dim=env.action_space.n,
+    config=config["agent"],
+)
+replay_buffer = ReplayBuffer(config["replay_buffer"])
+batch_size = config["environment"]["batch_size"]
+target_update_frequency = config["environment"]["target_update_frequency"]
+
+
 for episode in range(episodes):
-    state, _ = env.reset()
+    state, info = env.reset()
+    state = np.transpose(state, (2, 0, 1))  # Convert to channel-first
     total_reward = 0
+    start_time = time.time()
 
-    for t in range(200):  # Max timesteps
+    done = False
+    while not done:
         action = agent.select_action(state)
-        next_state, reward, done, _, _ = env.step(action)
+        next_state, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
+        next_state = np.transpose(next_state, (2, 0, 1))
+
+        # Add transition to replay buffer
         replay_buffer.add(state, action, reward, next_state, done)
         state = next_state
         total_reward += reward
 
-        # Sample from buffer and train
-        if len(replay_buffer.buffer) > batch_size:
-            states, actions, rewards, next_states, dones = replay_buffer.sample(
-                batch_size
-            )
-            states = torch.FloatTensor(states).to(agent.q_network.fc[0].weight.device)
-            actions = torch.LongTensor(actions).to(agent.q_network.fc[0].weight.device)
-            rewards = torch.FloatTensor(rewards).to(agent.q_network.fc[0].weight.device)
-            next_states = torch.FloatTensor(next_states).to(
-                agent.q_network.fc[0].weight.device
-            )
-            dones = torch.FloatTensor(dones).to(agent.q_network.fc[0].weight.device)
+    # Train the agent at the end of the episode
+    agent.train(batch_size, replay_buffer)
 
-            q_values = (
-                agent.q_network(states).gather(1, actions.unsqueeze(-1)).squeeze(-1)
-            )
-            next_q_values = agent.q_network(next_states).max(1)[0]
-            target = rewards + agent.gamma * next_q_values * (1 - dones)
+    # Update the target network periodically
+    if episode % target_update_frequency == 0:
+        agent.update_target_network()
 
-            loss = torch.nn.functional.mse_loss(q_values, target)
-            agent.optimizer.zero_grad()
-            loss.backward()
-            agent.optimizer.step()
+    # Log GPU usage
+    if torch.cuda.is_available():
+        gpu_usage = torch.cuda.memory_allocated() / 1e6  # MB
+    else:
+        gpu_usage = 0
 
-            metrics_exporter.log_metric("loss", loss.item())
-
-        if done:
-            break
-
-    # Log metrics
-    metrics_exporter.log_metric("rewards", total_reward)
-    metrics_exporter.log_gpu_stats()
-    agent.update_epsilon()
-
-print("Training completed!")
-metrics = metrics_exporter.export()
-print("Exported Metrics:", metrics)
+    end_time = time.time()
+    print(
+        f"Episode {episode + 1}/{episodes}, Reward: {total_reward}, Epsilon: {agent.epsilon:.3f}, GPU Usage: {gpu_usage:.2f} MB, Time: {end_time - start_time:.2f}s"
+    )

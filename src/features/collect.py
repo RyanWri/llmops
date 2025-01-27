@@ -80,3 +80,18 @@ def get_gpu_memory():
     if torch.cuda.is_available():
         return torch.cuda.memory_allocated()
     return 0
+
+
+def log_usage(replay_buffer: ReplayBuffer):
+    # GPU utilization
+    gpu_usage = torch.cuda.memory_allocated() / 1e6 if torch.cuda.is_available() else 0
+
+    # CPU memory
+    memory_info = psutil.virtual_memory()
+    cpu_usage = memory_info.used / 1e6  # MB
+
+    return {
+        "gpu_usage_mb": gpu_usage,
+        "cpu_usage_mb": cpu_usage,
+        "buffer_usage": replay_buffer.usage_percent(),
+    }
